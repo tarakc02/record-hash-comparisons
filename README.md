@@ -49,8 +49,10 @@ data sets). Individual records also need their own identifiers because
 
 # Notes
 
-- ASAP: the earlier we can create the identifier the better. I had an
-  experience where I first 
+- ASAP: the earlier we can create the identifier the better. Any change to code
+  that is executed before the identifier is calculated could change the
+  identifier of one or more records, which becomes a problem for project
+  consistency.
 - "Long" and "short" identifiers: Sometimes you create an identifier based on
   some key fields, e.g. name + date + event_id. I don't think of that as a
   record identifier, that is usually being done to identify some other thing in
