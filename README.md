@@ -5,7 +5,7 @@ individauls, events, etc. -- anything about which you will ask "are *x* and *y*
 the same?" which includes anything that needs to be counted or joined across
 data sets). Individual records also need their own identifiers because
 
-identify1. To track changes to records through the data processing pipeline. In the
+1. To track changes to records through the data processing pipeline. In the
    course of an analysis we find that record #ABC123 has an unexpected value in
    some field. Each task has an input and an output, so we can trace record
    #ABC123 back through each step to see when that value came to be -- whether
@@ -23,7 +23,9 @@ identify1. To track changes to records through the data processing pipeline. In 
 - Pipeline consistency: an identifier remains the same from the start of the
   data processing pipeline through to the end. Basically any identifier you
   create that you actually write as an explicit column in the data (as opposed
-  to, say, re-calculating it every time you need to use it) should fulfill this
+  to, say, re-calculating it every time you need to use it) should fulfill
+  this. The test should be how many times the identifier is calculated. If that
+  happens in more than one place, it's a potential bug.
 
 - Project consistency: This is harder -- the idea is that an identifier should
   remain consistent through the duration of the project (this could include new
@@ -67,6 +69,8 @@ identifiers, even if they use the same hashing function:
 the_data <- read.delim("the_data.csv", sep = "|")
 record_ids <- apply(the_data, 1, hash)
 ```
+
+Compared to:
 
 ```{r}
 the_data <- readr::read_delim("the_data.csv", delim = "|")
