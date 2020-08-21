@@ -107,6 +107,60 @@ distinct records would end up with the same id! So we want to be careful, and
 make sure to include the name of the dataset a record belongs to within its
 identifier (or within the content fed to the hash function for a hash id).
 
+# What's in a (column) name?
+
+What if two objects have the same record content and data types, but different column names? Do they hash the same way?
+
+Consider these two snippets of R code:
+
+``` r
+doe_family_1 <- tribble(
+  ~NAME, ~DATE, ~LOCATION,
+  "John Doe", "1948-12-10", "Paris",
+  "Janet Doe", "1966-12-16", "New York City",
+  "Jane Doe", "1998-07-17", "Rome") %>%
+  print()
+#> # A tibble: 3 x 3
+#>   NAME      DATE       LOCATION     
+#>   <chr>     <chr>      <chr>        
+#> 1 John Doe  1948-12-10 Paris        
+#> 2 Janet Doe 1966-12-16 New York City
+#> 3 Jane Doe  1998-07-17 Rome
+```
+
+Compared to:
+
+``` r
+doe_family_2 <- doe_family_1 %>%
+  clean_names() %>%
+  print()
+#> # A tibble: 3 x 3
+#>   name      date       location     
+#>   <chr>     <chr>      <chr>        
+#> 1 John Doe  1948-12-10 Paris        
+#> 2 Janet Doe 1966-12-16 New York City
+#> 3 Jane Doe  1998-07-17 Rome
+
+```
+
+They're both tibbles with three character columns and three rows with the exact same record content. Because they have different column names, however, they hash differently.
+
+``` r
+apply(doe_family_1, 1, digest, algo = "sha1")
+#> [1] "4a069856d22cbc0aa7dbe83cc33f9aa8e735740c"
+#> [2] "9dfdc23516915d056feed2aa01882d6d07466fed"
+#> [3] "a70ff5d42a25073a8542cf5af361d2b895963ab2"
+
+apply(doe_family_2, 1, digest, algo = "sha1")
+#> [1] "ce8deff8dc5ff4c75efae1c1882ee5e209240274"
+#> [2] "9e6c274aba5b40d85f561979f82e9dc1654b8987"
+#> [3] "acd02f7f003c70a5dcd118119df3aa24ed2ef70c"
+```
+
+The reason is that the column names get passed into the hash function along with the record contents when operating on dataframe rows (at least in R's implementation).
+
+We should be thoughtful about when we generate record identifiers. By the ASAP notion, we should create this identifier before doing any sort of manipulation, even if that's just cleaning the column names, but probably after we've created a new column indicating where the data source. However, there might be compelling reasons for computing a hash id after cleaning column names. For example, a new set of data from the same source might use uppercase letters for column names instead of lowercase letters as in previous files. Cleaning the names before hashing the record contents of the new file would allow the hash id to be used to identify duplicates in previous files. 
+
 ## ?!?! stuff in the world
 
 We had a recent experience where we were receiving data in batches from
@@ -119,3 +173,4 @@ would change from batch-to-batch, sometimes year first, sometimes month first,
 etc.. In order to get an identifier that would be able to match records across
 these different formats, we'd have to first standardize the batches. Which goes
 against the earlier advice of ASAP identifier creation.
+
